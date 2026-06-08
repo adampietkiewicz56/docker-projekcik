@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Notes</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 760px; margin: 2rem auto; padding: 0 1rem; color: #1f2328; }
+    h1 { font-size: 1.5rem; }
+    form { display: grid; gap: 0.5rem; margin-bottom: 1.5rem; }
+    input, textarea, button { font: inherit; padding: 0.5rem; border: 1px solid #d0d7de; border-radius: 6px; }
+    button { background: #1f6feb; color: #fff; border: none; cursor: pointer; }
+    button:hover { background: #1158c7; }
+    .note { border: 1px solid #d0d7de; padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 0.5rem; }
+    .note h3 { margin: 0 0 0.25rem 0; font-size: 1rem; }
+    .note small { color: #656d76; }
+    .del { float: right; background: #cf222e; padding: 0.2rem 0.6rem; font-size: 0.85rem; }
+    .del:hover { background: #a40e26; }
+  </style>
+</head>
+<body>
+  <h1>Notatki</h1>
+  <form id="new-note">
+    <input id="title" placeholder="Tytuł" required maxlength="200" />
+    <textarea id="content" placeholder="Treść" rows="3" maxlength="10000"></textarea>
+    <button type="submit">Dodaj</button>
+  </form>
+  <div id="list">Ładowanie…</div>
+
+  <script>
+    const API = "/api";
+    const list = document.getElementById("list");
+
+    async function load() {
+      const res = await fetch(API + "/notes");
+      const notes = await res.json();
+      if (!notes.length) { list.innerHTML = "<em>Brak notatek.</em>"; return; }
+      list.innerHTML = notes.map(n => `
+        <div class="note">
+          <button class="del" data-id="${n.id}">Usuń</button>
+          <h3>${escapeHtml(n.title)}</h3>
+          <small>${new Date(n.created_at).toLocaleString()}</small>
+          <p>${escapeHtml(n.content)}</p>
+        </div>`).join("");
+      list.querySelectorAll(".del").forEach(b => b.onclick = async () => {
+        await fetch(API + "/notes/" + b.dataset.id, { method: "DELETE" });
+        load();
+      });
+    }
+
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"})[c]);
+    }
+
+    document.getElementById("new-note").onsubmit = async (e) => {
+      e.preventDefault();
+      const title = document.getElementById("title").value;
+      const content = document.getElementById("content").value;
+      await fetch(API + "/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, content })
+      });
+      e.target.reset();
+      load();
+    };
+
+    load();
+  </script>
+</body>
+</html>
