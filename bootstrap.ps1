@@ -36,8 +36,8 @@ Step "4/6  Laduje obrazy do kind"
 kind load docker-image notes-backend:dev notes-worker:dev notes-frontend:dev --name notes
 
 # 5) Deploy ----------------------------------------------------------------
-Step "5/6  Deploy overlay dev"
-kubectl apply -k k8s/overlays/dev
+Step "5/6  Deploy overlay local (obrazy zbudowane lokalnie)"
+kubectl apply -k k8s/overlays/local
 
 # 6) Wait for rollout ------------------------------------------------------
 Step "6/6  Czekam na gotowosc komponentow"

@@ -62,9 +62,17 @@ Szczegółowa instrukcja uruchomienia i lista zasobów: [CHECKLIST.md](CHECKLIST
 
 ## Lokalne uruchomienie (skrót)
 
+Najprościej — jeden skrypt robiący wszystko (klaster, Ingress, build, load, deploy, smoke test):
+
+```powershell
+.\bootstrap.ps1
+```
+
+Albo ręcznie:
+
 ```bash
-# 1. Klaster kind + Ingress
-kind create cluster --name notes
+# 1. Klaster kind (z etykietą ingress-ready + mapowaniem portów) + Ingress
+kind create cluster --name notes --config kind-config.yaml
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.11.2/deploy/static/provider/kind/deploy.yaml
 kubectl wait --namespace ingress-nginx --for=condition=ready pod \
   --selector=app.kubernetes.io/component=controller --timeout=180s
@@ -75,16 +83,17 @@ docker build -t notes-worker:dev   -f ./backend/Dockerfile.worker ./backend
 docker build -t notes-frontend:dev ./frontend
 kind load docker-image notes-backend:dev notes-worker:dev notes-frontend:dev --name notes
 
-# 3. Wdrożenie (overlay dev) — podmiana obrazów na lokalne
-sed -i 's|ghcr.io/REPLACE_OWNER/notes-backend:latest|notes-backend:dev|g'  k8s/base/*.yaml
-sed -i 's|ghcr.io/REPLACE_OWNER/notes-worker:latest|notes-worker:dev|g'   k8s/base/*.yaml
-sed -i 's|ghcr.io/REPLACE_OWNER/notes-frontend:latest|notes-frontend:dev|g' k8s/base/*.yaml
-kubectl apply -k k8s/overlays/dev
+# 3. Wdrożenie — overlay "local" podmienia obrazy ghcr.io na lokalne tagi :dev
+kubectl apply -k k8s/overlays/local
 
 # 4. Weryfikacja
 kubectl -n notes-dev get all
-kubectl -n notes-dev rollout status deploy/dev-backend
+kubectl -n notes-dev rollout status deploy/backend
 ```
+
+> **Overlay `local` vs `dev`/`prod`:** `local` używa obrazów zbudowanych lokalnie
+> (`notes-*:dev`, wgranych przez `kind load`). Środowiska `dev` i `prod` używają
+> obrazów z rejestru `ghcr.io` — i to ich używa pipeline CI/CD.
 
 Pełna lista komend, przykładowe wyniki i test trwałości danych: [CHECKLIST.md](CHECKLIST.md).
 

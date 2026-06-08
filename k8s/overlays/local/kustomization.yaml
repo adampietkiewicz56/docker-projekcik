@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Overlay "local" — do uruchomienia na lokalnym kind/minikube/k3d.
+# Bazuje na overlayu dev (namespace notes-dev, 2 repliki, host notes.dev.local),
+# ale podmienia obrazy z rejestru ghcr.io na lokalne tagi zbudowane przez
+# `docker build` i wgrane przez `kind load docker-image ... :dev`.
+# Dzieki temu klaster nie probuje pobierac obrazow z rejestru.
+
+resources:
+  - ../dev
+
+images:
+  - name: ghcr.io/REPLACE_OWNER/notes-backend
+    newName: notes-backend
+    newTag: dev
+  - name: ghcr.io/REPLACE_OWNER/notes-worker
+    newName: notes-worker
+    newTag: dev
+  - name: ghcr.io/REPLACE_OWNER/notes-frontend
+    newName: notes-frontend
+    newTag: dev

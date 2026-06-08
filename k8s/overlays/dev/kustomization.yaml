@@ -11,17 +11,6 @@ labels:
     pairs:
       environment: dev
 
-images:
-  - name: ghcr.io/REPLACE_OWNER/notes-backend
-    newName: notes-backend
-    newTag: dev
-  - name: ghcr.io/REPLACE_OWNER/notes-worker
-    newName: notes-worker
-    newTag: dev
-  - name: ghcr.io/REPLACE_OWNER/notes-frontend
-    newName: notes-frontend
-    newTag: dev
-
 patches:
   - target:
       kind: Deployment
