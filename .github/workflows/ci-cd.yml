@@ -136,8 +136,8 @@ jobs:
         run: |
           OWNER=${{ steps.owner.outputs.owner }}
           TAG=${{ needs.build-and-push.outputs.tag }}
-          find k8s -name '*.yaml' -exec sed -i "s|ghcr.io/REPLACE_OWNER|ghcr.io/${OWNER}|g" {} +
-          find k8s -name '*.yaml' -exec sed -i "s|:latest|:${TAG}|g" {} +
+          find k8s/base -name '*.yaml' -exec sed -i "s|ghcr.io/REPLACE_OWNER|ghcr.io/${OWNER}|g" {} +
+          find k8s/base -name '*.yaml' -exec sed -i "s|:latest|:${TAG}|g" {} +
 
       - name: Login to GHCR (image pull secret)
         run: |
@@ -157,17 +157,17 @@ jobs:
       - name: Wait for rollout
         run: |
           set -e
-          kubectl -n notes-dev rollout status statefulset/dev-postgres --timeout=180s
-          kubectl -n notes-dev rollout status deployment/dev-redis      --timeout=180s
-          kubectl -n notes-dev wait --for=condition=complete job/dev-notes-migrate --timeout=180s || \
-            kubectl -n notes-dev logs job/dev-notes-migrate --all-containers || true
-          kubectl -n notes-dev rollout status deployment/dev-backend  --timeout=180s
-          kubectl -n notes-dev rollout status deployment/dev-worker   --timeout=180s
-          kubectl -n notes-dev rollout status deployment/dev-frontend --timeout=180s
+          kubectl -n notes-dev rollout status statefulset/postgres --timeout=180s
+          kubectl -n notes-dev rollout status deployment/redis     --timeout=180s
+          kubectl -n notes-dev wait --for=condition=complete job/notes-migrate --timeout=180s || \
+            kubectl -n notes-dev logs job/notes-migrate --all-containers || true
+          kubectl -n notes-dev rollout status deployment/backend  --timeout=180s
+          kubectl -n notes-dev rollout status deployment/worker   --timeout=180s
+          kubectl -n notes-dev rollout status deployment/frontend --timeout=180s
 
       - name: Smoke test API
         run: |
-          kubectl -n notes-dev port-forward svc/dev-backend 8000:8000 &
+          kubectl -n notes-dev port-forward svc/backend 8000:8000 &
           PF=$!
           sleep 5
           curl -fsS http://localhost:8000/health
